@@ -8,12 +8,41 @@ jobs:
   continuous-integration:
     runs-on: ubuntu-latest
     steps:
+      # step 1
       - uses: actions/checkout@v3
+      
+      # step 2
       - name: Install poetry
         run: pipx install poetry
+      
+      # step 3
       - uses: actions/setup-python@v4
         with:
           python-version: '3.8'
           cache: 'poetry'
-      - run: poetry install
-      - run: poetry run pytest
+      
+      # step 4 
+      - name: Install dependencies
+        run: poetry install
+
+      # step 5
+      - name: Run pytest
+        run: poetry run pytest
+
+      # step 6
+      - name: Create Zipfile archive of dependencies
+        run: |
+          poetry python -m site --user-site |
+          xargs zip -r9 api.zip
+            
+      # Step 7
+      - name: Add App to Zip file
+        run: zip -g api.zip -r app
+      
+      # Step 8
+      - name: Upload zip file artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: api
+          path: api.zip
+      
