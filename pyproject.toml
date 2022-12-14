@@ -5,7 +5,6 @@ description = ""
 authors = ["sikso1897 <sikso1897@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "template_github_severless"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
