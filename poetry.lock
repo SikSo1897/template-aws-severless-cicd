@@ -297,7 +297,7 @@ email = ["email-validator (>=1.0.3)"]
 name = "pytest"
 version = "7.2.0"
 description = "pytest: simple powerful testing with Python"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -361,6 +361,7 @@ files = [
 
 [package.dependencies]
 anyio = ">=3.4.0,<5"
+typing-extensions = {version = ">=3.10.0", markers = "python_version < \"3.10\""}
 
 [package.extras]
 full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyaml"]
@@ -410,5 +411,5 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.10"
-content-hash = "d5e1a9d0d9cec8ff7f6ac9ab13aa787c1b244187d35aec3d8186d2f114b3be46"
+python-versions = "^3.8"
+content-hash = "99d7fc80ec8af4457eb468be10e969f18f6a6e2dfd97c10918d85e1c8a355ab5"
