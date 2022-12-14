@@ -32,8 +32,8 @@ jobs:
       # step 6
       - name: Create Zipfile archive of dependencies
         run: |
-          poetry run python -m site --user-site |
-          xargs zip -r9 api.zip
+          zip -9r api.zip `poetry env info -p`/lib/python3.8/site-packages
+          
             
       # Step 7
       - name: Add App to Zip file
