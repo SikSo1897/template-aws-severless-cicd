@@ -41,7 +41,7 @@ jobs:
       
       # Step 8
       - name: Upload zip file artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: api
           path: api.zip
