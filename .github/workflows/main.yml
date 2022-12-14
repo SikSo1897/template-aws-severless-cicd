@@ -32,7 +32,7 @@ jobs:
       # step 6
       - name: Create Zipfile archive of dependencies
         run: |
-          zip -9r api.zip `poetry env info -p`/lib/python3.8/site-packages
+          find `poetry env info -p` -type d -name 'site-packages' | xargs zip -9r api.zip
           
             
       # Step 7
