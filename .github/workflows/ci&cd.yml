@@ -80,9 +80,9 @@ jobs:
 
       - name: Deploy new Lambda
         run: |
-          aws lambda update-function-code
-            --function-name ${{secrets.AWS_FUNCTION_NAME}}
-            --s3-bucket ${{secrets.AWS_S3_NAME}}
+          aws lambda update-function-code \
+            --function-name ${{secrets.AWS_FUNCTION_NAME}} \
+            --s3-bucket ${{secrets.AWS_S3_NAME}} \
             --s3-key api.zip
       #   env:
       #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
