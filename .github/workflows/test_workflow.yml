@@ -3,7 +3,7 @@ run-name: ${{github.ref_name}} Zip site-packages
 on:
   push:
     branches:
-      - hotfix/*
+      - hotfix/**
 jobs:
   continuous-integration:
     runs-on: ubuntu-latest
@@ -30,23 +30,27 @@ jobs:
       - name: Run pytest
         run: poetry run pytest
       
-      - name: Check path Site-packages
+      - name: Zip Site-packes 
         run: |
-          find `poetry env info -p` -type d -name 'site-packages' | echo
-      # step 6
-      - name: Create Zipfile archive of dependencies
+          find `poetry env info -p` -type d -name 'site-packages' -print | xargs -I % cp -R % .
+          mv site-packages python
+          zip -r python.zip python
+          unzip -l python.zip
+      
+      - name: Zip app
         run: |
-          find `poetry env info -p` -type d -name 'site-packages' | xargs zip -9r api.zip
+          zip -r app.zip app
+          unzip -l app.zip
 
-      # # Step 7
-      # - name: Add App to Zip file
-      #   run: |
-      #     cd app && zip -g ../api.zip -r . && cd -
+      - name: Upload python.zip file artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: python.zip
+          path: python.zip
 
-      # # Step 8
-      # - name: Upload zip file artifact
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: api
-      #     path: api.zip
-
+      - name: Upload app.zip file artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app.zip
+          path: app.zip
+      
