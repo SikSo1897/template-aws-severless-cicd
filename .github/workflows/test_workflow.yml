@@ -1,4 +1,5 @@
 name: Hotfix Zip site-packages
+run-name: ${{github.ref_name}} Zip site-packages
 on:
   push:
     branches:
