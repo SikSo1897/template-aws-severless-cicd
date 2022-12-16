@@ -45,7 +45,7 @@ jobs:
           zip -r bin.zip bin
           unzip -l bin.zip
 
-      - name: Upload zip file artifact
+      - name: Upload Zip file artifact
         uses: actions/upload-artifact@v3
         with:
           name: zip-files
@@ -83,27 +83,47 @@ jobs:
 
       - name: Upload to S3
         run: |
-          aws s3 cp . s3://${{secrets.AWS_S3_NAME}}/ \
+          aws s3 cp . s3://${{secrets.AWS_S3_BUCKET}}/ \
             --recursive --exclude "*" --include "*.zip"
 
-      - name: Deploy Lambda Layer
+      - name: Check Bucket files
         run: |
-          aws s3 ls s3://${{secrets.AWS_S3_NAME}}
+          aws s3 ls s3://${{secrets.AWS_S3_BUCKET}} 
+      
+      - name: Deploy Lambda layer (Python Packages)
+        run: |
+          aws lambda publish-layer-version \
+            --layer-name layer-python --description "Python packages" \
+            --license-info "MIT" \
+            --compatible-runtimes python3.6 python3.7 python3.8 \
+            --compatible-architectures "x86_64" \
+            --content S3Bucket=${{secrets.AWS_S3_BUCKET}},S3Key=python.zip \
+            --query "LayerVersionArn" | read LayerVersionArnPython
+          echo ${{env.LayerVersionArnPython}}
 
-      #     aws lambda publish-layer-version --layer-name my-layer --description "My layer"  \ 
-      #     --license-info "MIT" --content S3Bucket=lambda-layers-us-east-2-123456789012,S3Key=layer.zip \
-      #     --compatible-runtimes python3.6 python3.7 python3.8
-      #       --compatible-architectures "arm64" "x86_64" 
+      - name: Deploy Lambda layer (Executable files)
+        run: |
+          aws lambda publish-layer-version \
+            --layer-name layer-chromium --description "Executable files" \
+            --license-info "MIT" \
+            --compatible-runtimes python3.6 python3.7 python3.8 \
+            --compatible-architectures "arm64" "x86_64" \
+            --content S3Bucket=${{secrets.AWS_S3_BUCKET}},S3Key=bin.zip \
+            --query "LayerVersionArn" | read LayerVersionArnChromium
+          echo ${{env.LayerVersionArnChromium}}
+      
+      - name: Update Lambda Layer
+        run: |
+          echo "arn: $LayerVersionArnPython $LayerVersionArnPython"
+          aws lambda update-function-configuration \
+            --function-name ${{secrets.AWS_FUNCTION_NAME}} \
+            --layers \
+              ${{env.LayerVersionArnPython}} \
+              ${{env.LayerVersionArnChromium}}
 
-      # - name: Deploy Lambda
-      #   run: |
-      #     aws lambda update-function-configuration --function-name my-function \
-      #       --layers \
-      #         arn:aws:lambda:us-east-2:123456789012:layer:my-layer:3 \
-      #         arn:aws:lambda:us-east-2:111122223333:layer:their-layer:2
-      # - name: Deploy new Lambda
-      #   run: |
-      #     aws lambda update-function-code \
-      #       --function-name ${{secrets.AWS_FUNCTION_NAME}} \
-      #       --s3-bucket ${{secrets.AWS_S3_NAME}} \
-      #       --s3-key app.zip
+      - name: Deploy Lambda Function
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{secrets.AWS_FUNCTION_NAME}} \
+            --s3-bucket ${{secrets.AWS_S3_BUCKET}} \
+            --s3-key app.zip 
