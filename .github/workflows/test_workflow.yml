@@ -1,5 +1,5 @@
 name: Hotfix Zip site-packages
-run-name: ${{github.ref_name}} Zip site-packages
+run-name: Zip site-packages (${{github.ref_name}})
 on:
   push:
     branches:
@@ -53,4 +53,12 @@ jobs:
         with:
           name: app.zip
           path: app.zip
+      
+      # - name: Upload app.zip file artifact
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: bin.zip
+      #     path: bin.zip
+      
+      
       
