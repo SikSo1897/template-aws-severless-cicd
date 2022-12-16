@@ -1,0 +1,2 @@
+layer/** filter=lfs diff=lfs merge=lfs -text
+layer/**/* filter=lfs diff=lfs merge=lfs -text
