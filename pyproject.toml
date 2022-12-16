@@ -1,16 +1,10 @@
 [tool.poetry]
-name = "template-github-serverless"
+name = "app"
 version = "0.1.0"
 description = "CI/CD Pipeline for AWS based FastApi"
-authors = [
-    "sikso1897 <sikso1897@gmail.com>"
-]
+authors = ["sikso1897 <sikso1897@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-
-include=[
-    { path="app", format="sdist" }
-]
 
 [tool.poetry.build]
 generate-setup-file = false
