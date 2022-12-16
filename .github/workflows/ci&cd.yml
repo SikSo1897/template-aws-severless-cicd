@@ -25,25 +25,54 @@ jobs:
         run: poetry install
 
       - name: Run pytest
-        run: poetry run pytest
+        run: |
+          ls -lh
+          poetry run pytest
 
-      - name: Site-packes Zip
+  continuous-deployment:
+    runs-on: ubuntu-latest
+    needs:
+      - continuous-integration
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.8"
+          cache: "poetry"
+
+      - name: Install product dependencies 
+        run: |
+          poetry install --only main
+
+      - name: Site-packages Zip
         run: |
           find `poetry env info -p` -type d -name 'site-packages' -print | xargs -I % cp -R % .
           mv site-packages python
           zip -r python.zip python
           unzip -l python.zip
+          ls -lh python
       
       - name: Application Zip
         run: |
           zip -r app.zip app
           unzip -l app.zip
+          ls -lh app
       
       - name: Executable files Zip
         run: |
           cp -R layer/bin .
           zip -r bin.zip bin
           unzip -l bin.zip
+          ls -lh bin
 
       - name: Upload Zip file artifact
         uses: actions/upload-artifact@v3
@@ -54,13 +83,6 @@ jobs:
             python.zip
             app.zip
 
-  continuous-deployment:
-    runs-on: ubuntu-latest
-    needs: 
-      - continuous-integration
-      
-    if: github.ref == 'refs/heads/main'
-    steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -70,11 +92,6 @@ jobs:
         
       - name: Check aws cli
         run: aws --version
-
-      - name: Download Lambda api.zip
-        uses: actions/download-artifact@v3
-        with:
-          name: zip-files
           
       - name: Display structure of downloaded files
         run: |
@@ -98,8 +115,7 @@ jobs:
             --compatible-runtimes python3.6 python3.7 python3.8 \
             --compatible-architectures "x86_64" \
             --content S3Bucket=${{secrets.AWS_S3_BUCKET}},S3Key=python.zip \
-            --query "LayerVersionArn" | read LayerVersionArnPython
-          echo ${{env.LayerVersionArnPython}}
+            --query "LayerVersionArn" --output text | xargs -I % echo "pythonLayerVersionArn=%" >> $GITHUB_ENV
 
       - name: Deploy Lambda layer (Executable files)
         run: |
@@ -109,17 +125,18 @@ jobs:
             --compatible-runtimes python3.6 python3.7 python3.8 \
             --compatible-architectures "arm64" "x86_64" \
             --content S3Bucket=${{secrets.AWS_S3_BUCKET}},S3Key=bin.zip \
-            --query "LayerVersionArn" | read LayerVersionArnChromium
-          echo ${{env.LayerVersionArnChromium}}
+            --query "LayerVersionArn" --output text | xargs -I % echo "chromiumLayerVersionArn=%" >> $GITHUB_ENV
       
       - name: Update Lambda Layer
         run: |
-          echo "arn: $LayerVersionArnPython $LayerVersionArnPython"
           aws lambda update-function-configuration \
             --function-name ${{secrets.AWS_FUNCTION_NAME}} \
+            --memory-size 512 \
+            --handler app.main.handler \
+            --timeout 30 \
             --layers \
-              ${{env.LayerVersionArnPython}} \
-              ${{env.LayerVersionArnChromium}}
+              ${{env.pythonLayerVersionArn}} \
+              ${{env.chromiumLayerVersionArn}}
 
       - name: Deploy Lambda Function
         run: |
