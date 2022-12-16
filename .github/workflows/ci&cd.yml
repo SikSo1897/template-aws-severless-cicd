@@ -7,45 +7,52 @@ jobs:
   continuous-integration:
     runs-on: ubuntu-latest
     steps:
-      # step 1
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          lfs: true
 
-      # step 2
       - name: Install poetry
         run: pipx install poetry
 
-      # step 3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.8"
           cache: "poetry"
 
-      # step 4
       - name: Install dependencies
         run: poetry install
 
-      # step 5
       - name: Run pytest
         run: poetry run pytest
 
-      # step 6
-      - name: Create Zipfile archive of dependencies
+      - name: Site-packes Zip
         run: |
-          find `poetry env info -p` -type d -name 'site-packages' | xargs zip -9r api.zip
-
-      # Step 7
-      - name: Add App to Zip file
+          find `poetry env info -p` -type d -name 'site-packages' -print | xargs -I % cp -R % .
+          mv site-packages python
+          zip -r python.zip python
+          unzip -l python.zip
+      
+      - name: Application Zip
         run: |
-          cd app && zip -g ../api.zip -r . && cd -
+          zip -r app.zip app
+          unzip -l app.zip
+      
+      - name: Executable files Zip
+        run: |
+          cp -R layer/bin .
+          zip -r bin.zip bin
+          unzip -l bin.zip
 
-      # Step 8
       - name: Upload zip file artifact
         uses: actions/upload-artifact@v3
         with:
-          name: api
-          path: api.zip
-
+          name: zip-files
+          path: |
+            bin.zip
+            python.zip
+            app.zip
 
   continuous-deployment:
     runs-on: ubuntu-latest
@@ -63,29 +70,31 @@ jobs:
         
       - name: Check aws cli
         run: aws --version
-      # move artifact -----
+
       - name: Download Lambda api.zip
         uses: actions/download-artifact@v3
         with:
-          name: api
+          name: zip-files
           
       - name: Display structure of downloaded files
-        run: ls -R
-
-      - name: Upload to S3
-        run: aws s3 cp api.zip s3://${{secrets.AWS_S3_NAME}}/api.zip
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-
-      - name: Deploy new Lambda
         run: |
-          aws lambda update-function-code \
-            --function-name ${{secrets.AWS_FUNCTION_NAME}} \
-            --s3-bucket ${{secrets.AWS_S3_NAME}} \
-            --s3-key api.zip
+          ls -R
+          find . \(-name "*.zip")\ | xargs unzip -l
+
+      # - name: Upload to S3
+      #   run: aws s3 cp api.zip s3://${{secrets.AWS_S3_NAME}}/api.zip
       #   env:
+      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      # - name: Deploy new Lambda
+      #   run: |
+      #     aws lambda update-function-code \
+      #       --function-name ${{secrets.AWS_FUNCTION_NAME}} \
+      #       --s3-bucket ${{secrets.AWS_S3_NAME}} \
+      #       --s3-key app.zip
+      # #   env:
       #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       #     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
