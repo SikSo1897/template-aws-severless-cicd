@@ -79,14 +79,10 @@ jobs:
       - name: Display structure of downloaded files
         run: |
           ls -R
-          find . \(-name "*.zip")\ | xargs unzip -l
+          find . \(-name "*.zip")\ -exec unzip -l {} \;
 
       # - name: Upload to S3
       #   run: aws s3 cp api.zip s3://${{secrets.AWS_S3_NAME}}/api.zip
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
 
       # - name: Deploy new Lambda
       #   run: |
@@ -94,7 +90,3 @@ jobs:
       #       --function-name ${{secrets.AWS_FUNCTION_NAME}} \
       #       --s3-bucket ${{secrets.AWS_S3_NAME}} \
       #       --s3-key app.zip
-      # #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
